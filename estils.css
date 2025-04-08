@@ -1,0 +1,11 @@
+/* estils.css */
+/* Estils per als controls */ 
+  
+ /* Elimina l'estil anterior del panell de configuració */
+#CONFIGURACIO { display: none; }
+
+.clickable:hover {
+  opacity: 1 !important;
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+}

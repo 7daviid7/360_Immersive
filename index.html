@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Riscos Laborals 360</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script src="ratoli.js" defer></script>
+    <script src="adaptador.js" defer></script>
+    <script src="navegacio.js" defer></script>
+  
+  </head>
+  <body>
+    <a-scene vr-mode-ui="enabled: true">
+      <a-assets>
+        <audio id="click-sound" src="https://cdn.aframe.io/360-image-gallery-boilerplate/audio/click.ogg"></audio>
+        <img id="img1" src="1.jpg"> 
+        <img id="img2" src="2.jpg">
+        <img id="img3" src="3.jpg">
+      </a-assets>
+
+      <!-- Escena 1 -->
+      <a-entity id="scene1" rotation="0 -85 0" visible="true">
+        <a-sky src="#img1" class="clickable"></a-sky>
+      </a-entity>
+
+      <!-- Escena 2 -->
+      <a-entity id="scene2" rotation="0 -85 0" visible="false">
+        <a-sky src="#img2" class="clickable"></a-sky>
+      </a-entity>
+
+      <!-- Escena 3 -->
+      <a-entity id="scene3" rotation="0 -85 0" visible="false">
+        <a-sky src="#img3" class="clickable"></a-sky>
+      </a-entity>
+
+      <!-- Càmera interactiva -->
+      <a-camera id="main-camera" rotation="0 0 0">
+        <a-cursor id="cursor"
+                  ></a-cursor>
+      </a-camera>
+    </a-scene>
+
+    <script>
+      // Variables globals per gestionar les escenes
+      const scenes = ['#scene1', '#scene2', '#scene3'];
+      let currentSceneIndex = 0;
+
+      // Funció per mostrar una escena donat el seu índex
+      function showScene(index) {
+        scenes.forEach((sceneID, idx) => {
+          const scene = document.querySelector(sceneID);
+          scene.setAttribute('visible', idx === index);
+        });
+        currentSceneIndex = index;
+        console.log("Mostrant escena:", scenes[currentSceneIndex]);
+      }
+
+      // Funció per canviar d'escena basant-nos en la direcció
+      function changeSceneGlobal(forward = true) {
+        if (forward) {
+          currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+        } else {
+          currentSceneIndex = (currentSceneIndex - 1 + scenes.length) % scenes.length;
+        }
+        showScene(currentSceneIndex);
+      }
+
+      // Handler per detectar si l'usuari fa clic en la vista
+      function handleClick(event) {
+        const cameraRotationY = document.getElementById("main-camera").getAttribute("rotation").y;
+        const angleThreshold = 5; // tolerància en graus
+        console.log('Rotació Y de la càmera: ', cameraRotationY);
+        if (cameraRotationY > -angleThreshold && cameraRotationY < angleThreshold) {
+          console.log("Clic endavant");
+          changeSceneGlobal(true);
+        } else if (cameraRotationY > 160 || cameraRotationY < -160) {
+          console.log("Clic enrere");
+          changeSceneGlobal(false);
+        } else {
+          console.log("Clic als costats, sense acció.");
+        }
+      }
+
+      // Assignem l'esdeveniment de clic al cursor
+      document.querySelector("#cursor").addEventListener("click", handleClick);
+
+      // Configurar les escenes en carregar la pàgina
+      document.addEventListener('DOMContentLoaded', () => {
+        showScene(currentSceneIndex);
+      });
+    </script>
+  </body>
+</html>
