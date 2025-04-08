@@ -1,7 +1,7 @@
 //fletxes. 
 AFRAME.registerComponent('arrow-button', {
     schema: {
-      src: { type: 'selector', /*default: '#arrow'*/},
+      src: { type: 'selector', default: '#arrow'},
       width: { type: 'number', default: 0.5 },
       height: { type: 'number', default: 0.5 },
       defaultOpacity: { type: 'number', default: 0.9 }
