@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Configuració inicial del cursor
   const cursor = document.querySelector('#cursor');
   let currentColor = '#001489';
-  let currentSize = 0.08;
+  let currentSize = 0.2;
   let currentOpacity = 0.8;
 
   // Elements 3D
@@ -37,13 +37,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Control de mida
   function updateSize(operation) {
     currentSize = operation === '+' ? 
-      Math.min(0.2, currentSize + 0.01) : 
-      Math.max(0.05, currentSize - 0.01);
+      Math.min(1, currentSize + 0.05) : 
+      Math.max(0.05, currentSize - 0.05);
+  
+    // Calcular escala relativa (valor original del cursor: 0.2)
+    const scaleFactor = currentSize / 0.2;
     
-    cursor.setAttribute('radius', currentSize);
+    cursor.setAttribute('scale', {
+      x: scaleFactor,
+      y: scaleFactor, 
+      z: scaleFactor
+    });
+    
     sizeValue.setAttribute('text', 'value', currentSize.toFixed(2));
   }
-
   // Control d'opacitat
   function updateOpacity(operation) {
     currentOpacity = operation === '+' ? 
