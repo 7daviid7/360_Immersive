@@ -8,8 +8,6 @@
     <title>360 OFICINA</title>
     <!-- Aquí es carrega el fitxer JavaScript extern -->
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-    <script src="js/adaptador.js" defer></script>
-    <script src="js/ratoli.js" defer></script>
     <script src="js/navegacio.js" defer></script>
     <script src="js/components.js" defer></script>
     
@@ -22,111 +20,33 @@
         <img id="img1" src="assets/imatges/1.jpg">
         <img id="img2" src="assets/imatges/2.jpg">
         <img id="img3" src="assets/imatges/3.jpg">
-        <img id="arrow" src="assets/models/arrow.jpg">
+        <img id="arrowEfect" src="assets/models/FletxaEfecte.svg">
+        <img id="arrow" src="assets/models/Fletxa.svg">
       </a-assets>
 
       <!-- Escena 1 -->
+      <!-- IMPORTANT: Les posicions de les fletxes entre escenes han de ser lleugerament diferents per a poder crear l'efecte desitjat.-->
       <a-entity id="scene1" visible="true">
         <a-sky src="#img1"></a-sky>
         <a-plane id="forward-arrow1" arrow-button position="1 1 -4"></a-plane>
-
-        <!-- Panell de configuració 3D millorat -->
-        <a-entity id="configPanel" position="0 2.5 -3" visible="false">
-          <!-- Fons del panell -->
-          <a-box position="0 0 0" width="3" height="2" depth="0.1" color="#333" opacity="0.95"></a-box>
-          
-          <!-- Secció Color -->
-          <a-entity position="-1.2 0.7 0.1" text="value: Color; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-          <a-entity id="colorPicker" position="-1.2 0.3 0.1" 
-                  geometry="primitive: circle; radius: 0.2"
-                  material="color: #001489; shader: flat"
-                  class="clickable"
-                  animation__hover="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
-                  animation__leave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-          </a-entity>
-
-          <!-- Secció Mida -->
-          <a-entity position="0 0.7 0.1" text="value: Mida; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-          <a-entity position="0 0.3 0.1">
-         
-              <a-entity class="slider-value" position="0 0 0" 
-                      text="value: 0.08; align: center; width: 1.0; color: white"></a-entity>
-              
-              <a-entity class="slider-minus clickable" position="-0.4 0 0"
-                      geometry="primitive: circle; radius: 0.15"
-                      material="color: #666; shader: flat"
-                      text="value: -; align: center; width: 2; color: white"
-                      animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                      animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-              </a-entity>
-              
-              <a-entity class="slider-plus clickable" position="0.4 0 0"
-                      geometry="primitive: circle; radius: 0.15"
-                      material="color: #666; shader: flat"
-                      text="value: +; align: center; width: 2; color: white; "
-                      animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                      animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-              </a-entity>
-          </a-entity>
-
-          <!-- Secció Opacitat -->
-          <a-entity position="1.2 0.7 0.1" text="value: Opacitat; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-          <a-entity position="1.2 0.3 0.1">
-              <a-entity class="slider-minus clickable" position="-0.4 0 0"
-                      geometry="primitive: circle; radius: 0.15"
-                      material="color: #666; shader: flat"
-                      text="value: -; align: center; width: 0.5; color: white"
-                      animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                      animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-              </a-entity>
-              
-              <a-entity class="slider-value" position="0 0 0" 
-                      text="value: 1.2; align: center; width: 1.0; color: white"></a-entity>
-              
-              <a-entity class="slider-plus clickable" position="0.4 0 0"
-                      geometry="primitive: circle; radius: 0.15"
-                      material="color: #666; shader: flat"
-                      text="value: +; align: center; width: 0.5; color: white"
-                      animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                      animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-              </a-entity>
-          </a-entity>
-        </a-entity>
-
-        <!-- Botó de configuració 3D millorat -->
-        <a-entity id="configButton" position="1.5 2 -3" 
-                geometry="primitive: circle; radius: 0.25"
-                material="color: #666; shader: flat; opacity: 0.9"
-                class="clickable"
-                text="value: ⚙; align: center; width: 0.6; color: white"
-                animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                animation__click="property: rotation; to: 0 0 360; dur: 1000; easing: linear">
-        </a-entity>
       </a-entity>
 
       <!-- Escena 2 -->
       <a-entity id="scene2" visible="false">
         <a-sky src="#img2"></a-sky>
-        <a-plane id="back-arrow2" arrow-button position="-1 1 -4"></a-plane>
-        <a-plane id="forward-arrow2" arrow-button position="1 1 -4"></a-plane>
+        <a-plane id="forward-arrow2" arrow-button position="-4 1 -4"></a-plane>
+        <a-plane id="back-arrow2" arrow-button position="4 1 -4" rotation= "0 0 180"></a-plane>
       </a-entity>
 
       <!-- Escena 3 -->
       <a-entity id="scene3" visible="false">
         <a-sky src="#img3"></a-sky>
-        <a-plane id="back-arrow3" arrow-button position="-1 1 -4"></a-plane>
+        <a-plane id="back-arrow3" arrow-button position="-1 1 -4" rotation= "0 0 180"></a-plane>
       </a-entity>
 
-      <!-- Càmera -->
-      <a-camera position="0 1.6 0" >
-        <a-cursor
-        id="cursor"
-        color="#00FF00" 
-        radius="0.8 " 
-        opacity="0.8"
-        scale="0.8 0.8 0.8"
-        material="shader: flat; color: #001489">
-        </a-cursor>
+      <a-camera
+        position="0 1.6 0"
+        cursor="rayOrigin: mouse; objects: [arrow-button]; fuse: false;">
       </a-camera>
     </a-scene>
 

@@ -1,139 +1,62 @@
-//fletxes. 
 AFRAME.registerComponent('arrow-button', {
-    schema: {
-      src: { type: 'selector', default: '#arrow'},
-      width: { type: 'number', default: 0.5 },
-      height: { type: 'number', default: 0.5 },
-      defaultOpacity: { type: 'number', default: 0.9 }
-    },
-    init: function () {
-      // Configura la geometria i el material
-      this.el.setAttribute('geometry', {
-        primitive: 'plane',
-        width: this.data.width,
-        height: this.data.height
-      });
-      this.el.setAttribute('material', {
-        src: this.data.src,
-        shader: 'flat',
-        opacity: this.data.defaultOpacity,
-        alphaTest: 0.5
-      });
-      this.el.classList.add('clickable');
-  
-      // Animació al passar el cursor per sobre
-      this.el.setAttribute('animation__mouseenter', {
-        property: 'scale',
-        to: '0.7 0.7 0.7',
-        startEvents: 'mouseenter',
-        dur: 200
-      });
-      // Animació al treure el cursor
-      this.el.setAttribute('animation__mouseleave', {
-        property: 'scale',
-        to: '0.5 0.5 0.5',
-        startEvents: 'mouseleave',
-        dur: 200
-      });
-    }
-  });
-
-  //seleccio de cursor.
-  AFRAME.registerComponent('config-panel', {
-    schema: {
-      visible: { type: 'boolean', default: false },
-      position: { type: 'vec3', default: { x: 0, y: 2.5, z: -3 } }
-    },
-    init: function () {
-      const panel = this.el;
-      // Aplica la posició i visibilitat del panell
-      panel.setAttribute('position', this.data.position);
-      panel.setAttribute('visible', this.data.visible);
-      
-      // Injecta el contingut del panell
-      panel.innerHTML = `
-        <!-- Fons del panell -->
-        <a-box position="0 0 0" width="3" height="2" depth="0.1" color="#333" opacity="0.95"></a-box>
-        
-        <!-- Secció Color -->
-        <a-entity position="-1.2 0.7 0.1" text="value: Color; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-        <a-entity id="colorPicker" position="-1.2 0.3 0.1" 
-                  geometry="primitive: circle; radius: 0.2"
-                  material="color: #001489; shader: flat"
-                  class="clickable"
-                  animation__hover="property: scale; to: 1.1 1.1 1.1; startEvents: mouseenter; dur: 200"
-                  animation__leave="property: scale; to: 1 1 1; startEvents: mouseleave; dur: 200">
-        </a-entity>
-  
-        <!-- Secció Mida -->
-        <a-entity position="0 0.7 0.1" text="value: Mida; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-        <a-entity position="0 0.3 0.1">
-            <a-entity class="slider-minus clickable" position="-0.4 0 0"
-                    geometry="primitive: circle; radius: 0.15"
-                    material="color: #666; shader: flat"
-                    text="value: -; align: center; width: 0.5; color: white"
-                    animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                    animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-            </a-entity>
-            
-            <a-entity class="slider-value" position="0 0 0" 
-                    text="value: 0.08; align: center; width: 1.0; color: white"></a-entity>
-            
-            <a-entity class="slider-plus clickable" position="0.4 0 0"
-                    geometry="primitive: circle; radius: 0.15"
-                    material="color: #666; shader: flat"
-                    text="value: +; align: center; width: 0.5; color: white"
-                    animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                    animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-            </a-entity>
-        </a-entity>
-  
-        <!-- Secció Opacitat -->
-        <a-entity position="1.2 0.7 0.1" text="value: Opacitat; align: center; width: 1.5; color: white; font-size: 0.08"></a-entity>
-        <a-entity position="1.2 0.3 0.1">
-            <a-entity class="slider-minus clickable" position="-0.4 0 0"
-                    geometry="primitive: circle; radius: 0.15"
-                    material="color: #666; shader: flat"
-                    text="value: -; align: center; width: 0.5; color: white"
-                    animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                    animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-            </a-entity>
-            
-            <a-entity class="slider-value" position="0 0 0" 
-                    text="value: 0.8; align: center; width: 1.0; color: white"></a-entity>
-            
-            <a-entity class="slider-plus clickable" position="0.4 0 0"
-                    geometry="primitive: circle; radius: 0.15"
-                    material="color: #666; shader: flat"
-                    text="value: +; align: center; width: 0.5; color: white"
-                    animation__hover="property: scale; to: 1.2 1.2 1.2; startEvents: mouseenter; dur: 200"
-                    animation__click="property: material.color; to: #444; startEvents: click; dur: 200">
-            </a-entity>
-        </a-entity>
-      `;
-    },
-    
-    update: function () {
-      // Actualitza la visibilitat si la propietat canvia
-      this.el.setAttribute('visible', this.data.visible);
-    }
-  });
-
-  AFRAME.registerComponent('config-button', {
-    schema: {
-      target: { type: 'selector' } // el selector del panell de configuració
-    },
-    init: function () {
+  schema: {
+      src: { type: 'selector', default: '#arrow' },
+      hoverSrc: { type: 'selector', default: '#arrowEfect' },
+      width: { type: 'number', default: 0.4 },
+      height: { type: 'number', default: 0.4 },
+      defaultOpacity: { type: 'number', default: 0.7 }
+  },
+  init: function () {
+      console.log('Component arrow-button inicialitzat a:', this.el.id); // <-- AFEGEIX AQUEST LOG
       const el = this.el;
-      const target = this.data.target;
-  
-      // Quan es fa clic, es canvia la visibilitat del panell
-      el.addEventListener('click', function () {
-        if (target) {
-          const current = target.getAttribute('visible');
-          target.setAttribute('visible', !current);
-        }
+      const data = this.data;
+
+      const clickSound=this.clickSound = document.querySelector('#click-sound');
+      el.setAttribute('geometry', {
+          primitive: 'plane',
+          width: data.width,
+          height: data.height
       });
-    }
-  });
-  
+      el.setAttribute('material', {
+          src: data.src,
+          shader: 'flat',
+          opacity: data.defaultOpacity,
+          alphaTest: 0.5 // Important per a imatges transparents
+      });
+      // el.classList.add('clickable'); // No estrictament necessari amb el selector 'objects' del raycaster
+
+      // Canvi d’imatge al passar el cursor
+      el.addEventListener('mouseenter', () => {
+          el.setAttribute('material', 'src', data.hoverSrc);
+          // Opcional: Pots afegir aquí el so de "hover" si en tens un
+
+      });
+
+      el.addEventListener('mouseleave', () => {
+          el.setAttribute('material', 'src', data.src);
+      });
+
+      // *** LISTENER PER DETECTAR EL CLIC I CRIDAR LA FUNCIÓ DE NAVEGACIÓ GLOBAL ***
+      el.addEventListener('click', () => {
+          console.log('Clic detectat a la fletxa amb ID:', el.id);
+
+          // Determina si és fletxa endavant o enrere basant-te en l'ID
+          const isForward = el.id.startsWith('forward-arrow');
+
+          // Cridar la funció de canvi d'escena global (window.changeScene)
+          // Ens assegurem que existeix abans de cridar-la per evitar errors
+          if (window.changeScene) {
+               window.changeScene(isForward);
+               // Reprodueix el so de clic. El so també es mou aquí.
+               if (clickSound) {
+                    clickSound.play();
+               }
+          } else {
+               console.error("Error: La funció window.changeScene no està definida. Assegura't que js/navegacio.js es carrega correctament abans de js/components.js i que window.changeScene es defineix.");
+          }
+      });
+      // ****************************************************************************
+  }
+});
+
+// Si tens altres components en aquest arxiu, continuarien aquí a sota...

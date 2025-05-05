@@ -1,47 +1,25 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const scenes = ['#scene1', '#scene2', '#scene3'];
-    let currentSceneIndex = 0;
+  const scenes = ['#scene1', '#scene2', '#scene3'];
+  let currentSceneIndex = 0;
 
-    function showScene(index) {
+  function showScene(index) {
       scenes.forEach((sceneID, idx) => {
-        document.querySelector(sceneID).setAttribute('visible', idx === index);
+          const sceneEl = document.querySelector(sceneID);
+          if (sceneEl) {
+               sceneEl.setAttribute('visible', idx == index);
+          } else {
+               console.log(`Element de l'escena no trobat: ${sceneID}`);
+          }
       });
       currentSceneIndex = index;
-      const configButton = document.querySelector('#configButton');
-      if(currentSceneIndex==1)
-      {
-        
-      }
-      else if(currentSceneIndex==2)
-      {
-        configButton.setAttribute('visible', false);
-      }
-      else if (currentSceneIndex==3) 
-      {
-        configButton.setAttribute('visible', false);
-      }
-    }
-
-    function changeScene(forward = true) {
+  }
+  // FEM LA FUNCIÓ DE CANVI D'ESCENA GLOBALMENT ACCESSIBLE
+  window.changeScene = function(forward = true) {
       currentSceneIndex = forward
-        ? (currentSceneIndex + 1) % scenes.length
-        : (currentSceneIndex - 1 + scenes.length) % scenes.length;
+          ? (currentSceneIndex + 1) % scenes.length
+          : (currentSceneIndex - 1 + scenes.length) % scenes.length;
+      console.log('Canviant d\'escena...', currentSceneIndex, forward ? 'Endavant' : 'Enrere');
       showScene(currentSceneIndex);
-    }
-
-    // Assignació automàtica de listeners
-    document.querySelectorAll('[id^="forward-arrow"]').forEach(arrow => {
-      arrow.addEventListener('click', () => {
-        changeScene(true);
-        document.querySelector('#click-sound').play();
-      });
-    });
-
-    document.querySelectorAll('[id^="back-arrow"]').forEach(arrow => {
-      arrow.addEventListener('click', () => {
-        changeScene(false);
-        document.querySelector('#click-sound').play();
-      });
-    });
-    showScene(currentSceneIndex);
-  });
+  };
+  showScene(currentSceneIndex);
+});
