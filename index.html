@@ -22,6 +22,7 @@
         <img id="img3" src="assets/imatges/3.jpg">
         <img id="arrowEfect" src="assets/models/FletxaEfecte.svg">
         <img id="arrow" src="assets/models/Fletxa.svg">
+        <img id="info" src="assets/models/Info.svg">
       </a-assets>
 
       <!-- Escena 1 -->
@@ -36,6 +37,12 @@
         <a-sky src="#img2"></a-sky>
         <a-plane id="forward-arrow2" arrow-button position="-4 1 -4"></a-plane>
         <a-plane id="back-arrow2" arrow-button position="4 1 -4" rotation= "0 0 180"></a-plane>
+
+        <a-plane id="info1" class="interactive" position="-2.41369 4.71033 4.96566" width="0.6" 
+          height="0.6" material="alphaTest: 0.5; shader: flat; transparent: true; src: #info" 
+          info-hotspot="targetPanel: #infoPanel-hazard1" 
+          rotation="-0.04583662361046586 179.9540113368938 -1.3659313835918825">
+        </a-plane>
       </a-entity>
 
       <!-- Escena 3 -->
@@ -46,7 +53,7 @@
 
       <a-camera
         position="0 1.6 0"
-        cursor="rayOrigin: mouse; objects: [arrow-button]; fuse: false;">
+        cursor="rayOrigin: mouse; objects: .interactive; fuse: false;">
       </a-camera>
     </a-scene>
 

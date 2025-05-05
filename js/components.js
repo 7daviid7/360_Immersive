@@ -11,6 +11,7 @@ AFRAME.registerComponent('arrow-button', {
       const el = this.el;
       const data = this.data;
 
+      el.classList.add('interactive');
       const clickSound=this.clickSound = document.querySelector('#click-sound');
       el.setAttribute('geometry', {
           primitive: 'plane',
@@ -58,5 +59,7 @@ AFRAME.registerComponent('arrow-button', {
       // ****************************************************************************
   }
 });
+
+
 
 // Si tens altres components en aquest arxiu, continuarien aquí a sota...
