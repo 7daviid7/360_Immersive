@@ -66,7 +66,7 @@ AFRAME.registerComponent('info-hotspot', {
     schema: {
       // Propietats visuals per a l'icono (similar a arrow-button)
       src: { type: 'selector', default:'#info' }, // L'asset de la icona normal (p.ex., #info-icon)
-      hoverSrc: { type: 'selector' }, // L'asset per a l'efecte hover (opcional, p.ex., #info-icon-hover)
+      hoverSrc: { type: 'selector', default: '#hoverInfo' }, // L'asset per a l'efecte hover (opcional, p.ex., #info-icon-hover)
       width: { type: 'number', default: 0.5 }, // Mida de l'icono
       height: { type: 'number', default: 0.5 },
       defaultOpacity: { type: 'number', default: 1.0 },
@@ -125,6 +125,7 @@ AFRAME.registerComponent('info-hotspot', {
         // --- Lògica de Clic ---
         el.addEventListener('click', () => {
           console.log('Clic a Hotspot:', el.id, '-> Obrint panell:', data.targetPanel);
+          
           if (targetPanelEl.components['info-panel']) {
             targetPanelEl.components['info-panel'].toggle();
   
@@ -147,7 +148,7 @@ AFRAME.registerComponent('info-hotspot', {
   //TEXT
   AFRAME.registerComponent('info-panel', {
     schema: {
-      closeButton: { type: 'selector', }, // Selector del botó de tancar dins del panell (p.ex., #infoPanel-hazard1 .close-button)
+      closeButton: { type: 'selector', default: '#closePanel-1' }, // Selector del botó de tancar dins del panell (p.ex., #infoPanel-hazard1 .close-button)
       visible: { type: 'boolean', default: false } // Controlar la visibilitat inicial
     },
   
@@ -186,4 +187,51 @@ AFRAME.registerComponent('info-hotspot', {
       // if (panelSound) { panelSound.play(); }
     }
   });
+
+  // NOU COMPONENT: panel-close-button (Gestiona l'aparença i hover del botó de tancar del panell)
+AFRAME.registerComponent('close-button', {
+    schema: {
+        // Propietats visuals per a la icona de tancar
+        src: { type: 'selector', default: '#exit'}, // Asset de la icona normal (p.ex., #close-icon)
+        hoverSrc: { type: 'selector', default: '#hoverExit'}, // Asset per a l'efecte hover (opcional, p.ex., #close-icon-hover)
+        width: { type: 'number', default: 0.15 }, // Mida del botó
+        height: { type: 'number', default: 0.15 },
+        defaultOpacity: { type: 'number', default: 1.0 } // Opacitat
+    },
+    init: function () {
+        const el = this.el; // L'entitat on s'aplica (l'a-plane del botó)
+        const data = this.data;
+
+        console.log('Component panel-close-button inicialitzat a:', el.id || 'entitat sense id'); // Log d'inicialització
+
+        // Configura geometria i material del botó utilitzant les dades de l'esquema
+        el.setAttribute('geometry', { primitive: 'plane', width: data.width, height: data.height });
+        el.setAttribute('material', {
+            src: data.src, // Utilitza l'asset de la icona normal
+            shader: 'flat',
+            opacity: data.defaultOpacity,
+            transparent: true,
+            alphaTest: 0.5
+        });
+
+        // Assegura que l'entitat és interactiva (si no ho és ja per la classe 'interactive' a l'HTML)
+        // Tot i que posarem la classe a l'HTML, afegir-la aquí garanteix que hi sigui si s'usa el component
+        el.classList.add('interactive');
+
+        // Lògica de Hover (si s'ha definit hoverSrc)
+        const defaultSrc = data.src; // Guardem la src original
+        if (data.hoverSrc) {
+            el.addEventListener('mouseenter', () => {
+                 el.setAttribute('material', 'src', data.hoverSrc);
+            });
+            el.addEventListener('mouseleave', () => {
+                 el.setAttribute('material', 'src', defaultSrc); // Tornar a la src original
+            });
+        }
+
+        // NOTA IMPORTANT: La lògica per TANCAR el panell (el listener de clic que crida toggle())
+        // NO VA AQUÍ. Aquesta lògica l'afegirà el component info-panel (que busca aquest botó).
+        // Aquest component només s'encarrega de l'APARENÇA i el HOVER del botó.
+    }
+});
   
