@@ -20,6 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
           : (currentSceneIndex - 1 + scenes.length) % scenes.length;
       console.log('Canviant d\'escena...', currentSceneIndex, forward ? 'Endavant' : 'Enrere');
       showScene(currentSceneIndex);
-  };
-  showScene(currentSceneIndex);
+    };
+
+  window.setSence = function() {
+    showScene(currentSceneIndex);
+};
+
+
 });
