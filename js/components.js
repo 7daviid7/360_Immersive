@@ -45,7 +45,8 @@ AFRAME.registerComponent('tutorial-button', {
             opacity: data.defaultOpacity,
             alphaTest: 0.5,
             minFilter: 'nearest', // Per a quan la textura es veu de lluny (minificació)
-            magFilter: 'nearest'  // Per a quan la textura es veu de prop (magnificació)
+            magFilter: 'nearest',  // Per a quan la textura es veu de prop (magnificació)
+            side: 'double'
         });
 
         // --- 3. Afegir el Listener de Clic ---
@@ -102,7 +103,8 @@ AFRAME.registerComponent('arrow-button', {
           src: data.src,
           shader: 'flat',
           opacity: data.defaultOpacity,
-          alphaTest: 0.5 // Important per a imatges transparents
+          alphaTest: 0.5, // Important per a imatges transparents
+          side: 'double'
       });
       // el.classList.add('clickable'); // No estrictament necessari amb el selector 'objects' del raycaster
 
@@ -172,7 +174,8 @@ AFRAME.registerComponent('info-hotspot', {
         shader: 'flat',
         opacity: data.defaultOpacity,
         transparent: true, // Normalment les icones SVG tenen transparència
-        alphaTest: 0.5 // Important per a imatges transparents
+        alphaTest: 0.5, // Important per a imatges transparents
+        side: 'double'
       });
   
       // AFEGEIX LA CLASSE 'interactive' DES DEL JS
@@ -315,122 +318,317 @@ AFRAME.registerComponent('close-button', {
 });
 
 AFRAME.registerComponent('tutorial-interactiu', {
-  schema: {
-      // Tolerància angular per detectar la rotació (en graus)
-      toleranciaAngular: {type: 'number', default: 5}
-      // Pots afegir altres propietats aquí si cal (p.ex. duració del feedback)
-  },
+    schema: {
+        toleranciaAngular: {type: 'number', default: 5}, // Tolerància en graus per a la rotació
+        targetRotationStep1: {type: 'number', default: 45}, // Graus per al pas 1 (girar a la dreta)
+        targetRotationStep2: {type: 'number', default: -90}, // Graus per al pas 2 (girar a l'esquerra, relatiu)
+        targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'} // Selector de l'objecte que s'ha de clicar al pas 3
+    },
 
-  init: function () {
-      // --- Referències als Elements HTML del Manual ---
-      this.manualPanelEl = this.el; // L'entitat <a-entity id="instruccions"> a la qual està adjunt el component
+    init: function () {
+        // --- Referències als Elements HTML del Manual (Existents) ---
+        this.manualPanelEl = this.el;
+        this.initialScreenEl = this.manualPanelEl.querySelector('#manual-initial-screen');
+        this.tutorialStepsEl = this.manualPanelEl.querySelector('#manual-tutorial-steps');
+        this.startButtonEl = this.manualPanelEl.querySelector('#start-tutorial-button');
+        this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button');
+        this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
 
-      // Referències a les dues "pantalles" principals dins del manual
-      this.initialScreenEl = this.manualPanelEl.querySelector('#manual-initial-screen');
-      this.tutorialStepsEl = this.manualPanelEl.querySelector('#manual-tutorial-steps');
+        // --- Noves Propietats per a la Lògica del Tutorial ---
+        this.tutorialActive = false; // Indica si el tutorial està en mode interactiu
+        this.currentStep = 0;       // 0 = inactiu, 1 = girar dreta, 2 = girar esquerra, 3 = clicar objecte, etc.
+        this.initialCameraYaw = 0;  // Guarda la rotació Y de la càmera a l'inici d'un pas de rotació
+        this.targetClickObject = null; // Referència a l'objecte que s'ha de clicar al pas 3
+        this.clickObjectOriginalColor = ''; // Per restaurar el color original de l'objecte després d'il·luminar-lo
 
-      // Referències als botons
-      this.startButtonEl = this.manualPanelEl.querySelector('#start-tutorial-button');
-      this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button'); // Usem el mateix botó "Tancar" per a les dues pantalles
+        //agafem la càmera. 
+        this.cameraEl = this.el.sceneEl.camera.el;
+        if (!this.cameraEl) {
+              console.error("tutorial-interactiu: La càmera ([a-camera]) encara no s'ha trobat al mètode play. Revisa la definició de la càmera a l'HTML o el moment de càrrega del script.");
+        } 
+        else {
+          console.log("tutorial-interactiu: Càmera trobada amb èxit");
+        }
 
-      // Referència al text on mostrarem les instruccions dinàmiques
-      this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
+        this.timeSinceLastCheck = 0;
+
+        // --- Listeners d'Esdeveniments per als Botons (Existents) ---
+        if (this.startButtonEl) {
+            this.startButtonEl.addEventListener('click', () => {
+                this.startTutorial();
+            });
+        } else { console.error("Botó 'Iniciar Tutorial' no trobat!"); }
+
+        if (this.closeButtonEl) {
+            this.closeButtonEl.addEventListener('click', () => {
+                console.log('Clic detectat al butto de tencar:', this.closeButtonEl.id);
+                this.closeManual();
+            });
+        } else { console.error("Botó 'Tancar' no trobat!"); }
+
+        // --- Configuració Inicial al Carregar el Component (Existents) ---
+        this.showInitialScreen(); // Mostrem la pantalla inicial al carregar
+    },
+
+    // El mètode 'tick' es crida a cada frame si el component està actiu
+    // Mètode tick amb limitació manual
+    tick: function (time, timeDelta) {
+        // Només actuem si el tutorial està actiu i la càmera existeix
+        if (!this.tutorialActive || !this.cameraEl) return;
+
+        // Acumulem el temps des de l'última comprovació
+        this.timeSinceLastCheck += timeDelta;
+
+        // --- NOVETAT CLAU: Obtenim la rotació Y de la càmera des de object3D (en radians) ---
+        const radY = this.cameraEl.object3D.rotation.y;
+        // Converteix a graus manualment (igual que al teu rotation-listener)
+        let currentYaw = radY * (180 / Math.PI);
+        // Normalitza a [0,360) (igual que al teu rotation-listener)
+        currentYaw = (currentYaw % 360 + 360) % 360;
+        // --- Fi NOVETAT CLAU ---
+
+        let deltaYaw = 0; // Variable per guardar la diferència d'angle per al pas actual
+
+        // --- Càlcul i Actualització del Text/Barra de Progrés (Passos 1 i 2) ---
+        // Això es pot fer a cada tick (o cada checkInterval) per suavitat
+        // Ho farem cada tick per mantenir la fluïdesa del text de l'angle
+        let progress = 0;
+        let targetDelta = 0;
+
+        switch (this.currentStep) {
+            case 1: // Pas 1: Girar 45 graus a la dreta
+                targetDelta = this.data.targetRotationStep1; // 45°
+                deltaYaw = currentYaw - this.initialCameraYaw;
+                // Ajustar l'angle per manejar el desbordament de 360/0 graus (si cal per la normalització de delta)
+                if (deltaYaw > 180) deltaYaw -= 360;
+                if (deltaYaw < -180) deltaYaw += 360;
+
+                // Càlcul del progrés cap a 45° dreta
+                progress = THREE.MathUtils.clamp(deltaYaw / targetDelta, 0, 1); // Clamp entre 0 i 1 (només positiu)
+
+                this.instructionTextEl.setAttribute('value',
+                    `PAS 1: Gira la vista ${targetDelta}° cap a la dreta. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
+
+                // Actualització de la barra de progrés
+                if (this.progressBarFillEl) {
+                     this.progressBarFillEl.setAttribute('scale', `${progress} 1 1`);
+                     // Opcional: Posa el percentatge al text també
+                     // this.instructionTextEl.setAttribute('value', `${this.instructionTextEl.getAttribute('value')} (${Math.round(progress * 100)}%)`);
+                }
+                break;
+
+            case 2: // Pas 2: Girar 90 graus a l'esquerra
+                targetDelta = this.data.targetRotationStep2; // -90°
+                deltaYaw = currentYaw - this.initialCameraYaw;
+                 // Ajustar l'angle per manejar el desbordament de 360/0 graus (si cal)
+                if (deltaYaw > 180) deltaYaw -= 360;
+                if (deltaYaw < -180) deltaYaw += 360;
+
+                // Càlcul del progrés cap a 90° esquerra
+                progress = THREE.MathUtils.clamp(Math.abs(deltaYaw) / Math.abs(targetDelta), 0, 1); // Clamp entre 0 i 1 (només negatiu, per això abs)
+
+                this.instructionTextEl.setAttribute('value',
+                    `PAS 2: Ara, gira la vista ${Math.abs(targetDelta)}° cap a l'esquerra. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
+
+                 // Actualització de la barra de progrés
+                 if (this.progressBarFillEl) {
+                      this.progressBarFillEl.setAttribute('scale', `${progress} 1 1`);
+                      // Opcional: Posa el percentatge al text també
+                     // this.instructionTextEl.setAttribute('value', `${this.instructionTextEl.getAttribute('value')} (${Math.round(progress * 100)}%)`);
+                 }
+                break;
+
+            case 3: // Pas 3: Clicar l'objecte - NO hi ha progrés de rotació aquí
+                 progress = 0; // El progrés de rotació és 0 en aquest pas
+                 this.instructionTextEl.setAttribute('value', `PAS 3: Fes clic a l'objecte il·luminat.`);
+                 // La barra de progrés ja s'haurà amagat a setupStep
+                 break;
+
+            default: // Altres passos o inactiu
+                progress = 0; // No hi ha progrés en altres estats
+                // La barra de progrés ja s'haurà amagat a setupStep o closeManual
+                break;
+        }
 
 
-      // --- Configuració Inicial al Carregar el Component ---
-      this.showInitialScreen(); // Mostrem la pantalla inicial
+        // --- Comprovació de Completació del Pas (Només cada interval) ---
+        const checkInterval = 50; // Mil·lisegons
+        if (this.timeSinceLastCheck < checkInterval) {
+            return; // No s'ha complert l'interval, sortim
+        }
+        this.timeSinceLastCheck -= checkInterval; // Reiniciem el comptador
 
-      // --- Listeners d'Esdeveniments per als Botons de la Pantalla Inicial ---
-      if (this.startButtonEl) {
-           this.startButtonEl.addEventListener('click', this.startTutorial.bind(this) );
-      } else { console.error("Botó 'Iniciar Tutorial' no trobat!"); }
+        // --- Lògica de Comprovació (Això només s'executa cada checkInterval) ---
+        switch (this.currentStep) {
+            case 1: // Pas 1: Girar a la dreta
+                 // 'deltaYaw' ja s'ha calculat abans
+                 // Comprovem si el delta actual és prou a prop de l'objectiu (45)
+                if (Math.abs(deltaYaw - targetDelta) < this.data.toleranciaAngular) {
+                    console.log("Pas 1 completat: Rotació a la dreta.");
+                    this.nextStep();
+                }
+                break;
 
-      if (this.closeButtonEl) {
-          this.closeButtonEl.addEventListener('click', () => {
-            console.log('Clic detectat al butto de tencar:', this.closeButtonEl.id);
-            this.closeManual(); 
+            case 2: // Pas 2: Girar a l'esquerra
+                // 'deltaYaw' ja s'ha calculat abans
+                 // Comprovem si el delta actual és prou a prop de l'objectiu (-90)
+                if (Math.abs(deltaYaw - targetDelta) < this.data.toleranciaAngular) {
+                    console.log("Pas 2 completat: Rotació a l'esquerra.");
+                    this.nextStep();
+                }
+                break;
+            // El Pas 3 (clic) es comprova al listener handleTargetClick, no aquí.
+        }
+    },
+    // --- Mètodes de Control del Manual (Existents) ---
+    showInitialScreen: function() {
+        console.log("Mostrant pantalla inicial del manual.");
+        this.initialScreenEl.setAttribute('visible', true);
+        this.tutorialStepsEl.setAttribute('visible', false);
+        this.manualPanelEl.setAttribute('visible', true);
+        this.manualPanelEl.setAttribute('scale', '1 1 1'); // Restaura l'escala
+        this.closeButtonEl.setAttribute('visible', true);
+        this.closeButtonEl.setAttribute('position', '0 -1 0.01'); // Posició del botó a la pantalla inicial
 
-        });
-      } else { console.error("Botó 'Tancar' no trobat!"); }
+        // Assegurem-nos que el tutorial està inactiu quan mostrem la pantalla inicial
+        this.tutorialActive = false;
+        this.currentStep = 0;
+        this.instructionTextEl.setAttribute('value', ''); // Buidar el text d'instrucció
+        this.removeStepListeners(); // Netejar qualsevol listener de pas actiu
+    },
 
+    startTutorial: function() {
+        console.log("Iniciant tutorial interactiu...");
+        this.tutorialActive = true; // Activem el mode interactiu
+        this.currentStep = 1;       // Comencem pel primer pas real
 
-      // TODO: Si teniu botons "Anterior"/"Següent" o "Començar" dins de la pantalla de passos,
-      // haureu d'afegir els seus listeners *després* de mostrar la pantalla de passos,
-      // o assegurar-vos que només s'activen quan el tutorialActive sigui true i el pas correcte.
+        this.initialScreenEl.setAttribute('visible', false);
+        this.tutorialStepsEl.setAttribute('visible', true);
+        this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01'); // Posició del botó a la pantalla de passos
 
-  },
-  showInitialScreen: function() {
-      console.log("Mostrant pantalla inicial del manual.");
-      // Mostrem només la pantalla inicial i amaguem la de passos
-      this.initialScreenEl.setAttribute('visible', true);
-      this.tutorialStepsEl.setAttribute('visible', false);
+        this.setupStep(this.currentStep); // Configurarem el primer pas
+    },
 
-      // Assegura't que el panell principal #instruccions sigui visible
-      this.manualPanelEl.setAttribute('visible', true);
-      this.manualPanelEl.setAttribute('scale', '1 1 1');
+    closeManual: function() {
+        console.log("Tancant manual...");
+        this.manualPanelEl.setAttribute('visible', false);
+        this.manualPanelEl.setAttribute('scale', '0 0 0'); // Escala a 0 per amagar-lo completament
+        this.tutorialActive = false;
+        this.currentStep = 0;
+        this.removeStepListeners(); // Netejar qualsevol listener de pas actiu
+        if (window.setSence) { // Assegura't que la funció existeix abans de cridar-la
+            window.setSence();
+        } else {
+            console.warn("La funció window.setSence() no està definida.");
+        }
+    },
 
-      // Assegura't que les guies visuals del món estiguin ocultes en aquest esta
+    finishTutorial: function() {
+        console.log("Tutorial interactiu completat!");
+        if (this.instructionTextEl) {
+            this.instructionTextEl.setAttribute('value', 'Tutorial completat! Ja pots navegar per l\'oficina.');
+        }
 
-       // Posiciona el botó de tancar on toqui a la pantalla inicial
-       // Si el tens dins de manual-initial-screen, la posició ja seria local.
-       // Si el tens fora, gestiona aquí la seva posició/visibilitat.
-       // En l'HTML suggerit, el closeButton està dins d'initial-screen, així que ja es mostra amb ell.
-       // No obstant això, el tornarem a fer visible aquí per si de cas i ajustem la posició si cal.
-       this.closeButtonEl.setAttribute('visible', true);
-       // Exemple de posició dins del contenidor manual-content-container
-       this.closeButtonEl.setAttribute('position', '0 -1 0.01');
-  },
+        this.tutorialActive = false;
+        this.currentStep = 100; // O un estat com 'finished'
 
-  startTutorial: function() {
-      console.log("Iniciant tutorial interactiu...");
-      this.tutorialActive = true; // Activem el mode interactiu
-      this.currentStep = 1; // Comencem pel primer pas interactiu real (el pas de girar 45)
+        this.removeStepListeners(); // Netejar qualsevol listener de pas actiu
 
-      // Ocultem la pantalla inicial
-      this.initialScreenEl.setAttribute('visible', false);
-      // Mostrem la pantalla dels passos del tutorial
-      this.tutorialStepsEl.setAttribute('visible', true);
+        // Tancar automàticament després de 3 segons
+        setTimeout(() => {
+            this.closeManual();
+        }, 3000);
+    },
 
-      // Ajustem la posició del botó de tancar per a la pantalla de passos si cal
-       this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01'); // Exemple de posició per a la pantalla de passos
+    // --- NOU MÈTODE: setupStep ---
+    setupStep: function(stepNumber) {
+        console.log("Configurant pas del tutorial:", stepNumber);
+        this.removeStepListeners(); // Neteja els listeners dels passos anteriors
 
-      // Iniciem la configuració visual i objectiu per al primer pas
-      this.setupStep(this.currentStep);
-  },
+        switch (stepNumber) {
+            case 1: // Pas 1: Girar a la dreta
+                // Guardem la rotació inicial de la càmera en aquest moment
+                this.initialCameraYaw = THREE.MathUtils.radToDeg(this.cameraEl.components.rotation.data.y);
+                console.log('setupStep(1): Guardant rotació inicial (initialCameraYaw) com a:', this.initialCameraYaw);
+                this.instructionTextEl.setAttribute('value', `PAS 1: Gira la vista 45° cap a la dreta.`);
+                break;
 
-  closeManual: function() {
-      console.log("Tancant manual...");
-      this.manualPanelEl.setAttribute('visible', false); // Amaguem tot el panell principal
-      this.manualPanelEl.setAttribute('scale', '0 0 0');
-      this.tutorialActive = false; // Desactivem el mode interactiu del tick
-      this.currentStep = 0; // Reset l'estat a l'inicial/inactiu
+            case 2: // Pas 2: Girar a l'esquerra
+                // Guardem la rotació inicial de la càmera per a aquest nou gir relatiu
+                this.initialCameraYaw = THREE.MathUtils.radToDeg(this.cameraEl.components.rotation.data.y);
+                this.instructionTextEl.setAttribute('value', `PAS 2: Ara, gira la vista 90° cap a l'esquerra.`);
+                break;
 
-      // TODO: Reset l'estat de l'escena si cal (p.ex. tornar a l'escena 1 si no hi som, reset rotació?)
-      // També podríem voler mostrar de nou la pantalla inicial per si el tornen a obrir
-      // Preparem la pantalla inicial per a la propera vegada que s'obri
-       window.setSence(); 
-  },
+            case 3: // Pas 3: Clicar un objecte
+                this.targetClickObject = document.querySelector(this.data.targetClickObjectSelector);
+                if (this.targetClickObject) {
+                    // Guardem el color original per restaurar-lo després
+                    this.clickObjectOriginalColor = this.targetClickObject.getAttribute('material', 'color') || this.targetClickObject.getAttribute('color');
 
-   finishTutorial: function() {
-       console.log("Tutorial interactiu completat!");
-       // TODO: Mostrar un missatge final a la pantalla de passos
-       if (this.instructionTextEl) {
-           this.instructionTextEl.setAttribute('value', 'Tutorial completat! Ja pots navegar per l\'oficina.');
-       }
+                    // Il·luminar l'objecte objectiu
+                    this.targetClickObject.setAttribute('material', 'color', '#00ff00'); // Verd brillant
+                    this.targetClickObject.setAttribute('material', 'emissive', '#00ff00'); // Fes-lo brillar
+                    this.targetClickObject.setAttribute('material', 'emissiveIntensity', 0.5);
 
+                    this.instructionTextEl.setAttribute('value', `PAS 3: Fes clic a l'objecte il·luminat.`);
+                    // Afegeix el listener de clic només a l'objecte objectiu
+                    this.targetClickObject.addEventListener('click', this.handleTargetClick.bind(this));
+                } else {
+                    console.error("tutorial-interactiu: L'objecte a clicar per al pas 3 no s'ha trobat amb el selector:", this.data.targetClickObjectSelector);
+                    // Si l'objecte no existeix, salta aquest pas
+                    this.nextStep();
+                }
+                break;
 
-       // Decidir què fer al final:
-       // 1. Deixar el missatge final i el botó de tancar actiu.
-       // 2. Tancar el manual automàticament després d'uns segons.
-       // 3. Mostrar un botó "Tornar a l'Oficina".
+            case 4: // Pas final: Tutorial completat
+                this.finishTutorial();
+                break;
 
-       // Exemple 2: Tancar automàticament després de 3 segons
-       setTimeout(() => {
-           this.closeManual();
-       }, 3000);
+            default:
+                console.warn("tutorial-interactiu: Pas del tutorial desconegut:", stepNumber);
+                this.finishTutorial();
+                break;
+        }
+    },
 
-       this.tutorialActive = false; // Ja no comprovem passos al tick
-       this.currentStep = 100; // Un número alt o un estat com 'finished' per indicar que ha acabat
-   },
+    // --- NOU MÈTODE: nextStep ---
+    nextStep: function() {
+        this.currentStep++;
+        this.setupStep(this.currentStep); // Configura el següent pas
+    },
 
+    // --- NOU MÈTODE: handleTargetClick ---
+    // Listener per quan es clica l'objecte objectiu al pas 3
+    handleTargetClick: function() {
+        console.log("Objectiu clicat! Pas 3 completat.");
+        // Restaura l'aparença original de l'objecte
+        if (this.targetClickObject) {
+            this.targetClickObject.setAttribute('material', 'color', this.clickObjectOriginalColor);
+            this.targetClickObject.setAttribute('material', 'emissive', '#000000'); // Apagar l'emissió
+            // És crucial eliminar el listener per evitar múltiples crides
+            this.targetClickObject.removeEventListener('click', this.handleTargetClick);
+        }
+        this.nextStep(); // Passa al següent pas (que serà el final)
+    },
+
+    // --- NOU MÈTODE: removeStepListeners ---
+    // Neteja els listeners específics del pas actiu
+    removeStepListeners: function() {
+        if (this.targetClickObject) {
+            this.targetClickObject.removeEventListener('click', this.handleTargetClick);
+            // Si el tutorial es tanca mentre l'objecte estava il·luminat, restaura el seu color
+            if (this.clickObjectOriginalColor) {
+                this.targetClickObject.setAttribute('material', 'color', this.clickObjectOriginalColor);
+                this.targetClickObject.setAttribute('material', 'emissive', '#000000');
+            }
+            this.targetClickObject = null;
+        }
+    },
+
+    // Mètode remove del component (per netejar-ho tot si el component és desenganxat de l'entitat)
+    remove: function() {
+        this.removeStepListeners(); // Netejar qualsevol listener de pas actiu
+        // Per als listeners de botons (startButtonEl, closeButtonEl), com que estan definits amb arrow functions directament,
+        // la neteja de memòria es gestiona automàticament amb la destrucció del component.
+    }
 });

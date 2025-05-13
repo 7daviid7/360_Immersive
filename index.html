@@ -39,15 +39,15 @@
             <a-plane id="start-tutorial-button" class="interactive" width="2" height="0.7" color="#28a745" position="0 0 0.01">
                 <a-text value="Iniciar Tutorial"  color="#fff" width="1.8"></a-text>
             </a-plane>
-
-            <a-plane id="close-manual-button" class="interactive" width="1.5" height="0.6" color="#dc3545" position="0 -1 0.01">
-              <a-text value="Tancar"  color="#fff" width="1.3"></a-text>
-            </a-plane>
         </a-entity>
+        <a-plane id="close-manual-button" class="interactive" width="1.5" height="0.6" color="#dc3545" position="0 -1 0.01">
+            <a-text value="Tancar"  color="#fff" width="1.3"></a-text>
+        </a-plane>
 
         <a-entity id="manual-tutorial-steps" visible="false">
-              <a-text id="instruction-text" value="" color="#fff" width="4.5" position="0 1.2 0.01"></a-text>
+            <a-text id="instruction-text" value="" color="#fff" width="4.5" position="-2.10229 0.56493 -0.00383" scale="1.00214 1.19091 2.65261"></a-text>
         </a-entity>
+        <a-box id="myInteractiveObject" position="1 1 -3" color="#4CC3D9"></a-box>
       </a-entity>
   
 
@@ -71,7 +71,7 @@
         </a-plane>
         <a-entity id="infoPanel-hazard1" info-panel="closeButton: #closePanel-1" position="0 2.69689 4.23813" rotation="0 180 0" scale="2 2 2">
 
-          <a-plane width="1.5" height="1.8" position="0.018 0.09535 0" material="opacity: 0.9; shader: flat; color: #333" scale="1.06886 1.03146 1">
+          <a-plane width="1.5" height="1.8" position="0.018 0.09535 0" material="side: double; opacity: 0.9; shader: flat; color: #333" scale="1.06886 1.03146 1">
           </a-plane>
       
           <a-text value="RISC: Cable a terra" position="-0.6 0.85979 0.01" color="#fff" width="1.4" wrap-count="25">
@@ -95,13 +95,16 @@
         <a-plane id="back-arrow3" arrow-button position="-1 1 -4" rotation= "0 0 180"></a-plane>
       </a-entity>
 
-      <a-camera
+      <a-camera id="camera"
         position="0 1.6 0"
-        cursor="rayOrigin: mouse; objects: .interactive; fuse: false;">
+        cursor="rayOrigin: mouse; objects: .interactive; fuse: false;"
+        look-controls> 
       </a-camera>
     </a-scene>
 
-    <!-- Botó de configuració                     
+    <!-- cursor="rayOrigin: mouse; objects: .interactive; fuse: false;" 
+    
+    Botó de configuració                     
     <div id="CONFIGURACIO">
       <div id="configButton">Configurar Cursor</div>
         

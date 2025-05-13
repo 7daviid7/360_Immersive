@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Test de Rotació de Càmera A-Frame</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    a-scene { width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <a-scene background="color: #FAFAFA">
+    <a-camera position="0 1.6 0" look-controls rotation-listener></a-camera>
+    <a-box position="0 1.6 -2" color="#4CC3D9"></a-box>
+    <a-entity id="rotationText"
+              position="-0.6 1.9 -1.5"
+              text="value: Rotació Y: 0°; color: #000; width: 2">
+    </a-entity>
+
+    <script>
+      AFRAME.registerComponent('rotation-listener', {
+        tick: function () {
+          // Llegeix la rotació Y en radians
+          const radY = this.el.object3D.rotation.y;
+          // Converteix a graus manualment
+          let degY = radY * (180 / Math.PI);
+          // Normalitza a [0,360)
+          degY = (degY % 360 + 360) % 360;
+          // Actualitza el text
+          const txtEl = this.el.sceneEl.querySelector('#rotationText');
+          txtEl.setAttribute('text', 'value', `Rotació Y: ${degY.toFixed(1)}°`);
+        }
+      });
+    </script>
+  </a-scene>
+</body>
+</html>
