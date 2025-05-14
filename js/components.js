@@ -320,7 +320,7 @@ AFRAME.registerComponent('close-button', {
 AFRAME.registerComponent('tutorial-interactiu', {
     schema: {
         toleranciaAngular: {type: 'number', default: 5}, // Tolerància en graus per a la rotació
-        targetRotationStep1: {type: 'number', default: 45}, // Graus per al pas 1 (girar a la dreta)
+        targetRotationStep1: {type: 'number', default: 90}, // Graus per al pas 1 (girar a la dreta)
         targetRotationStep2: {type: 'number', default: -90}, // Graus per al pas 2 (girar a l'esquerra, relatiu)
         targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'} // Selector de l'objecte que s'ha de clicar al pas 3
     },
@@ -333,16 +333,21 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.startButtonEl = this.manualPanelEl.querySelector('#start-tutorial-button');
         this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button');
         this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
+        this.completionSoundEl =document.querySelector('#finish-sound');
+    
+        
 
         // --- Noves Propietats per a la Lògica del Tutorial ---
         this.tutorialActive = false; // Indica si el tutorial està en mode interactiu
         this.currentStep = 0;       // 0 = inactiu, 1 = girar dreta, 2 = girar esquerra, 3 = clicar objecte, etc.
         this.initialCameraYaw = 0;  // Guarda la rotació Y de la càmera a l'inici d'un pas de rotació
-        this.targetClickObject = null; // Referència a l'objecte que s'ha de clicar al pas 3
         this.clickObjectOriginalColor = ''; // Per restaurar el color original de l'objecte després d'il·luminar-lo
 
         //agafem la càmera. 
-        this.cameraEl = this.el.sceneEl.camera.el;
+        this.cameraEl = document.querySelector('a-camera');
+                    
+                  
+        //this.cameraEl = this.el.sceneEl.camera.el;
         if (!this.cameraEl) {
               console.error("tutorial-interactiu: La càmera ([a-camera]) encara no s'ha trobat al mètode play. Revisa la definició de la càmera a l'HTML o el moment de càrrega del script.");
         } 
@@ -379,19 +384,12 @@ AFRAME.registerComponent('tutorial-interactiu', {
         // Acumulem el temps des de l'última comprovació
         this.timeSinceLastCheck += timeDelta;
 
-        // --- NOVETAT CLAU: Obtenim la rotació Y de la càmera des de object3D (en radians) ---
         const radY = this.cameraEl.object3D.rotation.y;
-        // Converteix a graus manualment (igual que al teu rotation-listener)
         let currentYaw = radY * (180 / Math.PI);
-        // Normalitza a [0,360) (igual que al teu rotation-listener)
+       
         currentYaw = (currentYaw % 360 + 360) % 360;
-        // --- Fi NOVETAT CLAU ---
-
+        
         let deltaYaw = 0; // Variable per guardar la diferència d'angle per al pas actual
-
-        // --- Càlcul i Actualització del Text/Barra de Progrés (Passos 1 i 2) ---
-        // Això es pot fer a cada tick (o cada checkInterval) per suavitat
-        // Ho farem cada tick per mantenir la fluïdesa del text de l'angle
         let progress = 0;
         let targetDelta = 0;
 
@@ -407,7 +405,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
                 progress = THREE.MathUtils.clamp(deltaYaw / targetDelta, 0, 1); // Clamp entre 0 i 1 (només positiu)
 
                 this.instructionTextEl.setAttribute('value',
-                    `PAS 1: Gira la vista ${targetDelta}° cap a la dreta. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
+                    `PAS 1: Gira la vista ${targetDelta}° cap a l'esquerre. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
 
                 // Actualització de la barra de progrés
                 if (this.progressBarFillEl) {
@@ -428,7 +426,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
                 progress = THREE.MathUtils.clamp(Math.abs(deltaYaw) / Math.abs(targetDelta), 0, 1); // Clamp entre 0 i 1 (només negatiu, per això abs)
 
                 this.instructionTextEl.setAttribute('value',
-                    `PAS 2: Ara, gira la vista ${Math.abs(targetDelta)}° cap a l'esquerra. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
+                    `PAS 2: Ara, gira la vista ${Math.abs(targetDelta)}° cap a la dreta. (Actual: ${Math.round(deltaYaw)}° / Objectiu: ${targetDelta}°)`);
 
                  // Actualització de la barra de progrés
                  if (this.progressBarFillEl) {
@@ -450,7 +448,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
                 break;
         }
 
-
+        //DQ: Només per optimització. 
         // --- Comprovació de Completació del Pas (Només cada interval) ---
         const checkInterval = 50; // Mil·lisegons
         if (this.timeSinceLastCheck < checkInterval) {
@@ -489,7 +487,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.manualPanelEl.setAttribute('scale', '1 1 1'); // Restaura l'escala
         this.closeButtonEl.setAttribute('visible', true);
         this.closeButtonEl.setAttribute('position', '0 -1 0.01'); // Posició del botó a la pantalla inicial
-
+        this.startButtonEl.setAttribute('scale', '1 1 1');
         // Assegurem-nos que el tutorial està inactiu quan mostrem la pantalla inicial
         this.tutorialActive = false;
         this.currentStep = 0;
@@ -501,7 +499,8 @@ AFRAME.registerComponent('tutorial-interactiu', {
         console.log("Iniciant tutorial interactiu...");
         this.tutorialActive = true; // Activem el mode interactiu
         this.currentStep = 1;       // Comencem pel primer pas real
-
+        
+        this.startButtonEl.setAttribute('scale', '0 0 0'); 
         this.initialScreenEl.setAttribute('visible', false);
         this.tutorialStepsEl.setAttribute('visible', true);
         this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01'); // Posició del botó a la pantalla de passos
@@ -560,7 +559,12 @@ AFRAME.registerComponent('tutorial-interactiu', {
                 break;
 
             case 3: // Pas 3: Clicar un objecte
-                this.targetClickObject = document.querySelector(this.data.targetClickObjectSelector);
+                this.targetClickObject = this.data.targetClickObjectSelector;
+                if(!this.targetClickObject)
+                {
+                    console.log("ERROR. "); 
+                }
+                else {console.log("targetClickobject inicialitzat amb: ", this.targetClickObject)}
                 if (this.targetClickObject) {
                     // Guardem el color original per restaurar-lo després
                     this.clickObjectOriginalColor = this.targetClickObject.getAttribute('material', 'color') || this.targetClickObject.getAttribute('color');
@@ -591,11 +595,48 @@ AFRAME.registerComponent('tutorial-interactiu', {
         }
     },
 
-    // --- NOU MÈTODE: nextStep ---
-    nextStep: function() {
-        this.currentStep++;
-        this.setupStep(this.currentStep); // Configura el següent pas
-    },
+    nextStep: function() {   
+    console.log("Passant al següent pas. Actual:", this.currentStep);
+    
+    // Guarda el pas actual abans d'incrementar-lo
+    const completedStep = this.currentStep;
+
+    // Reprodueix el so de completació
+    if (this.completionSoundEl) {
+        this.completionSoundEl.play();
+    } else {
+        console.warn("No es pot reproduir el so de completació. Entitat o component sound no trobat.");
+    }
+
+    // Si acabem de completar el pas 1 o 2, reseteja la càmera
+    if ((completedStep === 1 || completedStep === 2) && this.cameraEl) {
+        console.log("Resetejant la càmera a 0,0,0");
+        
+        // Guarda l'estat dels controls
+        const lookEnabled = this.cameraEl.hasAttribute('look-controls');
+        const wasdEnabled = this.cameraEl.hasAttribute('wasd-controls');
+        
+        // Desactiva temporalment els controls
+        if (lookEnabled) this.cameraEl.removeAttribute('look-controls');
+        if (wasdEnabled) this.cameraEl.removeAttribute('wasd-controls');
+        
+        // Reseteja la rotació
+        this.cameraEl.setAttribute('rotation', {x: 0, y: 0, z: 0});
+        
+        // Força l'actualització de la matriu
+        this.el.sceneEl.object3D.updateMatrixWorld(true);
+        
+        // Restaura els controls després d'un petit retard
+        setTimeout(() => {
+            if (lookEnabled) this.cameraEl.setAttribute('look-controls', '');
+            if (wasdEnabled) this.cameraEl.setAttribute('wasd-controls', '');
+        }, 100);
+    }
+
+    // Incrementa el pas i configura el següent
+    this.currentStep++;
+    this.setupStep(this.currentStep);
+},
 
     // --- NOU MÈTODE: handleTargetClick ---
     // Listener per quan es clica l'objecte objectiu al pas 3
