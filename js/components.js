@@ -317,6 +317,63 @@ AFRAME.registerComponent('close-button', {
     }
 });
 
+AFRAME.registerComponent('adaptive-close-button', {
+  schema: {
+    baseScale: {type: 'vec3', default: {x: 1, y: 1, z: 1}},
+    hoverScale: {type: 'vec3', default: {x: 1.1, y: 1.1, z: 1.1}},
+    duration: {type: 'int', default: 200}
+  },
+
+  init: function () {
+    const el = this.el;
+    const base = this.data.baseScale;
+    const hover = this.data.hoverScale;
+    const duration = this.data.duration;
+
+    // Apliquem animacions amb atributs d'A-Frame
+    el.setAttribute('animation__mouseenter', {
+      property: 'scale',
+      to: `${hover.x} ${hover.y} ${hover.z}`,
+      startEvents: 'mouseenter',
+      dur: duration
+    });
+
+    el.setAttribute('animation__mouseleave', {
+      property: 'scale',
+      to: `${base.x} ${base.y} ${base.z}`,
+      startEvents: 'mouseleave',
+      dur: duration
+    });
+
+    // Inicialitza amb la mida base
+    el.setAttribute('scale', base);
+  },
+
+  update: function () {
+    const hover = this.data.hoverScale;
+    const base = this.data.baseScale;
+    const duration = this.data.duration;
+
+    this.el.setAttribute('animation__mouseenter', {
+        property: 'scale',
+        to: `${hover.x} ${hover.y} ${hover.z}`,
+        startEvents: 'mouseenter',
+        dur: duration
+    });
+
+    this.el.setAttribute('animation__mouseleave', {
+        property: 'scale',
+        to: `${base.x} ${base.y} ${base.z}`,
+        startEvents: 'mouseleave',
+        dur: duration
+    });
+
+    this.el.setAttribute('scale', base);
+    }
+});
+
+
+
 AFRAME.registerComponent('tutorial-interactiu', {
     schema: {
         toleranciaAngular: {type: 'number', default: 5}, // Tolerància en graus per a la rotació
@@ -487,7 +544,15 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.manualPanelEl.setAttribute('visible', true);
         this.manualPanelEl.setAttribute('scale', '1 1 1'); // Restaura l'escala
         this.closeButtonEl.setAttribute('visible', true);
+        this.closeButtonEl.setAttribute('position', '1.2 -1 0.01');         
+        this.closeButtonEl.setAttribute('adaptive-close-button', {
+        baseScale: {x: 1, y: 1, z: 1},
+        hoverScale: {x: 1.1, y: 1.1, z: 1.1},
+        duration: 100
+        });
+
         this.startButtonEl.setAttribute('scale', '1 1 1');
+        this.startButtonEl.setAttribute('visible', true); 
         this.data.targetClickObjectSelector.setAttribute('scale', '0 0 0')
         // Assegurem-nos que el tutorial està inactiu quan mostrem la pantalla inicial
         this.tutorialActive = false;
@@ -506,7 +571,10 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.initialScreenEl.setAttribute('visible', false);
         this.tutorialStepsEl.setAttribute('visible', true);
         this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01');
-        this.closeButtonEl.setAttribute('scale', '0.310 0.840 1'); // Posició del botó a la pantalla de passos
+        this.closeButtonEl.setAttribute('adaptive-close-button', {
+        baseScale: {x: 0.310, y: 0.840, z: 1},
+        hoverScale: {x: 0.341, y: 0.924, z: 1} // per exemple, una mica més gran que baseScale
+        });
 
         this.setupStep(this.currentStep); // Configurarem el primer pas
     },
@@ -678,3 +746,4 @@ AFRAME.registerComponent('tutorial-interactiu', {
         // la neteja de memòria es gestiona automàticament amb la destrucció del component.
     }
 });
+
