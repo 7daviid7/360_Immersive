@@ -322,7 +322,8 @@ AFRAME.registerComponent('tutorial-interactiu', {
         toleranciaAngular: {type: 'number', default: 5}, // Tolerància en graus per a la rotació
         targetRotationStep1: {type: 'number', default: 90}, // Graus per al pas 1 (girar a la dreta)
         targetRotationStep2: {type: 'number', default: -90}, // Graus per al pas 2 (girar a l'esquerra, relatiu)
-        targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'} // Selector de l'objecte que s'ha de clicar al pas 3
+        targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'},// Selector de l'objecte que s'ha de clicar al pas 3
+        targetSoundSelector: {type: 'selector', default: '#so-celebracio'}
     },
 
     init: function () {
@@ -333,7 +334,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.startButtonEl = this.manualPanelEl.querySelector('#start-tutorial-button');
         this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button');
         this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
-        this.completionSoundEl =document.querySelector('#finish-sound');
+        this.completionSoundEl =this.data.targetSoundSelector; 
     
         
 
@@ -486,8 +487,8 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.manualPanelEl.setAttribute('visible', true);
         this.manualPanelEl.setAttribute('scale', '1 1 1'); // Restaura l'escala
         this.closeButtonEl.setAttribute('visible', true);
-        this.closeButtonEl.setAttribute('position', '0 -1 0.01'); // Posició del botó a la pantalla inicial
         this.startButtonEl.setAttribute('scale', '1 1 1');
+        this.data.targetClickObjectSelector.setAttribute('scale', '0 0 0')
         // Assegurem-nos que el tutorial està inactiu quan mostrem la pantalla inicial
         this.tutorialActive = false;
         this.currentStep = 0;
@@ -501,9 +502,11 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.currentStep = 1;       // Comencem pel primer pas real
         
         this.startButtonEl.setAttribute('scale', '0 0 0'); 
+        this.startButtonEl.setAttribute('visible', false);
         this.initialScreenEl.setAttribute('visible', false);
         this.tutorialStepsEl.setAttribute('visible', true);
-        this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01'); // Posició del botó a la pantalla de passos
+        this.closeButtonEl.setAttribute('position', '2.2 1.4 0.01');
+        this.closeButtonEl.setAttribute('scale', '0.310 0.840 1'); // Posició del botó a la pantalla de passos
 
         this.setupStep(this.currentStep); // Configurarem el primer pas
     },
@@ -570,6 +573,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
                     this.clickObjectOriginalColor = this.targetClickObject.getAttribute('material', 'color') || this.targetClickObject.getAttribute('color');
 
                     // Il·luminar l'objecte objectiu
+                    this.targetClickObject.setAttribute('scale', '1 1 1')
                     this.targetClickObject.setAttribute('material', 'color', '#00ff00'); // Verd brillant
                     this.targetClickObject.setAttribute('material', 'emissive', '#00ff00'); // Fes-lo brillar
                     this.targetClickObject.setAttribute('material', 'emissiveIntensity', 0.5);
@@ -603,7 +607,8 @@ AFRAME.registerComponent('tutorial-interactiu', {
 
     // Reprodueix el so de completació
     if (this.completionSoundEl) {
-        this.completionSoundEl.play();
+        this.completionSoundEl.components.sound.stopSound()
+        this.completionSoundEl.components.sound.playSound();
     } else {
         console.warn("No es pot reproduir el so de completació. Entitat o component sound no trobat.");
     }
