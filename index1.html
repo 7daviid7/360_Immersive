@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+</head>
+<body>
+    <a-scene background="color: #001122">
+        <!-- Càmera -->
+        <a-camera position="0 1.6 3" wasd-controls look-controls></a-camera>
+        
+        <!-- Llums -->
+        <a-light type="ambient" color="#404040"></a-light>
+        <a-light type="point" position="0 3 0" color="#ffffff"></a-light>
+        
+        <!-- Container per al confeti -->
+        <a-entity id="confetti-container"></a-entity>
+        
+        <!-- Botó per activar -->
+        <a-box id="trigger-button" 
+               position="0 0 -2" 
+               width="1" 
+               height="0.3" 
+               depth="0.1" 
+               color="#ff6600"
+               text="value: CLICA PER CONFETI!; align: center; color: white; width: 6">
+        </a-box>
+        
+        <!-- Pla de terra -->
+        <a-plane position="0 -1 0" rotation="-90 0 0" width="10" height="10" color="#222222"></a-plane>
+        
+        <script>
+            AFRAME.registerComponent('confetti-system', {
+                init: function() {
+                    this.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8800'];
+                    this.shapes = ['box', 'sphere', 'cylinder'];
+                },
+                
+                createConfetti: function(count = 50) {
+                    console.log(`Creant ${count} peces de confeti...`);
+                    
+                    for (let i = 0; i < count; i++) {
+                        this.createPiece(i);
+                    }
+                },
+                
+                createPiece: function(index) {
+                    // Crear l'entitat
+                    const piece = document.createElement('a-entity');
+                    
+                    // Posició inicial (des del centre, cap amunt)
+                    const startX = (Math.random() - 0.5) * 0.5;
+                    const startY = 0.5;
+                    const startZ = (Math.random() - 0.5) * 0.5;
+                    
+                    // Posició final (escampat)
+                    const endX = (Math.random() - 0.5) * 6;
+                    const endY = Math.random() * -2 - 1;
+                    const endZ = (Math.random() - 0.5) * 6;
+                    
+                    // Geometria aleatòria
+                    const shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
+                    const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+                    const size = Math.random() * 0.08 + 0.02;
+                    
+                    // Configurar la peça
+                    if (shape === 'box') {
+                        piece.setAttribute('geometry', {
+                            primitive: 'box',
+                            width: size,
+                            height: size * 0.1,
+                            depth: size
+                        });
+                    } else if (shape === 'sphere') {
+                        piece.setAttribute('geometry', {
+                            primitive: 'sphere',
+                            radius: size * 0.5
+                        });
+                    } else {
+                        piece.setAttribute('geometry', {
+                            primitive: 'cylinder',
+                            radius: size * 0.3,
+                            height: size * 0.1
+                        });
+                    }
+                    
+                    piece.setAttribute('material', {
+                        color: color,
+                        metalness: 0.1,
+                        roughness: 0.8
+                    });
+                    
+                    piece.setAttribute('position', `${startX} ${startY} ${startZ}`);
+                    
+                    // Animacions
+                    const duration = Math.random() * 1000 + 2000; // 2-3 segons
+                    const delay = Math.random() * 200; // Petit retard aleatori
+                    
+                    // Animació de posició (trajectòria parabòlica simulada)
+                    piece.setAttribute('animation__position', {
+                        property: 'position',
+                        to: `${endX} ${endY} ${endZ}`,
+                        dur: duration,
+                        delay: delay,
+                        easing: 'easeOutQuad'
+                    });
+                    
+                    // Animació de rotació
+                    const rotX = Math.random() * 720 - 360;
+                    const rotY = Math.random() * 720 - 360;
+                    const rotZ = Math.random() * 720 - 360;
+                    
+                    piece.setAttribute('animation__rotation', {
+                        property: 'rotation',
+                        to: `${rotX} ${rotY} ${rotZ}`,
+                        dur: duration,
+                        delay: delay,
+                        easing: 'linear'
+                    });
+                    
+                    // Afegir a l'escena
+                    this.el.appendChild(piece);
+                    
+                    // Eliminar després de l'animació
+                    setTimeout(() => {
+                        if (piece.parentNode) {
+                            piece.parentNode.removeChild(piece);
+                        }
+                    }, duration + delay + 500);
+                }
+            });
+            
+            // Inicialitzar el sistema
+            document.addEventListener('DOMContentLoaded', function() {
+                const container = document.querySelector('#confetti-container');
+                const button = document.querySelector('#trigger-button');
+                
+                // Afegir el component al container
+                container.setAttribute('confetti-system', '');
+                
+                function launchConfetti() {
+                    console.log("🎉 LLANÇANT CONFETI! 🎉");
+                    const system = container.components['confetti-system'];
+                    if (system) {
+                        system.createConfetti(60);
+                    }
+                }
+                
+                // Event listeners
+                if (button) {
+                    button.addEventListener('click', launchConfetti);
+                }
+                
+                // Tecla espai
+                document.addEventListener('keydown', function(event) {
+                    if (event.code === 'Space') {
+                        event.preventDefault();
+                        launchConfetti();
+                    }
+                });
+                
+                console.log("Sistema de confeti carregat! Prem ESPAI o clica el botó taronja.");
+            });
+        </script>
+    </a-scene>
+</body>
+</html>

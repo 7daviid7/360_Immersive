@@ -10,6 +10,7 @@
     <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
     <script src="js/components.js" defer></script>
     <script src="js/navegacio.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/gh/n5ro/aframe-particle-system-component@master/dist/aframe-particle-system-component.min.js"></script>
     
     
     <link rel="stylesheet" href="css/estils.css">
@@ -33,7 +34,8 @@
         <img id="catalan-font-png" src="assets/fonts/OpenSans.png"> 
       </a-assets>
 
-      <a-entity id="instruccions" visible="true" position="0 1.6 -2.41873" tutorial-interactiu>
+      <a-entity id="instruccions" visible="true" position="0 1.6 -3.51658" tutorial-interactiu>
+        <a-entity id="confetti-emitter" position="0 2.97512 -1.80413" confetti-system></a-entity>
         <a-plane id="panell-instruccions" scale="1.05 1.04 1" width="5" height="3.5" color="#222" opacity="0.9" position="0.02 -0.13 -0.01"></a-plane>
 
         <a-entity id="manual-initial-screen" visible="true">

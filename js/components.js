@@ -372,6 +372,120 @@ AFRAME.registerComponent('adaptive-close-button', {
     }
 });
 
+AFRAME.registerComponent('confetti-system', {
+    init: function() {
+        this.colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#ff8800', '#8800ff'];
+        this.shapes = ['box', 'sphere', 'cylinder'];
+        this.isActive = false;
+    },
+    
+    // Mètode per activar el confeti
+    activate: function(particleCount = 50) {
+        if (this.isActive) return; // Evitar múltiples activacions simultànies
+        
+        this.isActive = true;
+        console.log(`🎉 Activant confeti amb ${particleCount} peces`);
+        
+        for (let i = 0; i < particleCount; i++) {
+            this.createPiece(i);
+        }
+        
+        // Desactivar després de 3 segons
+        setTimeout(() => {
+            this.isActive = false;
+        }, 3000);
+    },
+    
+    // Mètode per desactivar (per compatibilitat amb el teu codi)
+    deactivate: function() {
+        this.isActive = false;
+    },
+    
+    createPiece: function(index) {
+        const piece = document.createElement('a-entity');
+        
+        // Posició inicial relativa a l'emissor
+        const emitterPos = this.el.getAttribute('position');
+        const startX = emitterPos.x + (Math.random() - 0.5) * 0.5;
+        const startY = emitterPos.y;
+        const startZ = emitterPos.z + (Math.random() - 0.5) * 0.5;
+        
+        // Posició final (simulant la velocitat i dispersió del teu particle-system)
+        const endX = startX + (Math.random() - 0.5) * 8; // velocitySpread: 4
+        const endY = startY + Math.random() * 2 - 4; // gravity effect
+        const endZ = startZ + (Math.random() - 0.5) * 8;
+        
+        // Geometria aleatòria
+        const shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
+        const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+        const size = Math.random() * 0.1 + 0.05; // similar al teu size: 0.1
+        
+        // Configurar geometria segons el tipus
+        if (shape === 'box') {
+            piece.setAttribute('geometry', {
+                primitive: 'box',
+                width: size,
+                height: size * 0.1,
+                depth: size
+            });
+        } else if (shape === 'sphere') {
+            piece.setAttribute('geometry', {
+                primitive: 'sphere',
+                radius: size * 0.5
+            });
+        } else {
+            piece.setAttribute('geometry', {
+                primitive: 'cylinder',
+                radius: size * 0.3,
+                height: size * 0.1
+            });
+        }
+        
+        piece.setAttribute('material', {
+            color: color,
+            metalness: 0.1,
+            roughness: 0.8
+        });
+        
+        piece.setAttribute('position', `${startX} ${startY} ${startZ}`);
+        
+        // Duració similar al teu maxAge: 3
+        const duration = Math.random() * 1000 + 2500; // 2.5-3.5 segons
+        const delay = Math.random() * 100;
+        
+        // Animació de trajectòria
+        piece.setAttribute('animation__position', {
+            property: 'position',
+            to: `${endX} ${endY} ${endZ}`,
+            dur: duration,
+            delay: delay,
+            easing: 'easeOutQuad'
+        });
+        
+        // Rotació
+        const rotX = Math.random() * 720 - 360;
+        const rotY = Math.random() * 720 - 360;
+        const rotZ = Math.random() * 720 - 360;
+        
+        piece.setAttribute('animation__rotation', {
+            property: 'rotation',
+            to: `${rotX} ${rotY} ${rotZ}`,
+            dur: duration,
+            delay: delay,
+            easing: 'linear'
+        });
+        
+        // Afegir a l'escena
+        document.querySelector('a-scene').appendChild(piece);
+        
+        // Eliminar després de l'animació
+        setTimeout(() => {
+            if (piece.parentNode) {
+                piece.parentNode.removeChild(piece);
+            }
+        }, duration + delay + 500);
+    }
+});
 
 
 AFRAME.registerComponent('tutorial-interactiu', {
@@ -380,7 +494,8 @@ AFRAME.registerComponent('tutorial-interactiu', {
         targetRotationStep1: {type: 'number', default: 90}, // Graus per al pas 1 (girar a la dreta)
         targetRotationStep2: {type: 'number', default: -90}, // Graus per al pas 2 (girar a l'esquerra, relatiu)
         targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'},// Selector de l'objecte que s'ha de clicar al pas 3
-        targetSoundSelector: {type: 'selector', default: '#so-celebracio'}
+        targetSoundSelector: {type: 'selector', default: '#so-celebracio'},
+        confetiSelector: {type: 'selector', default: '#confetti-emitter'}, 
     },
 
     init: function () {
@@ -392,6 +507,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button');
         this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
         this.completionSoundEl =this.data.targetSoundSelector; 
+        this.confetiEfect = this.data.confetiSelector; 
     
         
 
@@ -598,6 +714,19 @@ AFRAME.registerComponent('tutorial-interactiu', {
         if (this.instructionTextEl) {
             this.instructionTextEl.setAttribute('value', 'Tutorial completat! Ja pots navegar per l\'oficina.');
         }
+        if (this.confetiEfect) {
+            console.log("confeti trobat");
+            
+            // Activar el sistema de confeti personalitzat
+            const confettiSystem = this.confetiEfect.components['confetti-system'];
+            if (confettiSystem) {
+                confettiSystem.activate(100); // 100 peces de confeti
+            }
+            
+            // Ja no cal setTimeout per desactivar, ho fa automàticament
+        } else {
+            console.log("confeti no trobat");
+        }
 
         this.tutorialActive = false;
         this.currentStep = 100; // O un estat com 'finished'
@@ -607,7 +736,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         // Tancar automàticament després de 3 segons
         setTimeout(() => {
             this.closeManual();
-        }, 3000);
+        }, 5000);
     },
 
     // --- NOU MÈTODE: setupStep ---
