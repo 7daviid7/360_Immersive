@@ -496,6 +496,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         targetClickObjectSelector: {type: 'selector', default: '#myInteractiveObject'},// Selector de l'objecte que s'ha de clicar al pas 3
         targetSoundSelector: {type: 'selector', default: '#so-celebracio'},
         confetiSelector: {type: 'selector', default: '#confetti-emitter'}, 
+        targetFinalSoundSelector: {type: 'selector', default: '#so-final'},
     },
 
     init: function () {
@@ -507,6 +508,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         this.closeButtonEl = this.manualPanelEl.querySelector('#close-manual-button');
         this.instructionTextEl = this.manualPanelEl.querySelector('#instruction-text');
         this.completionSoundEl =this.data.targetSoundSelector; 
+        this.finalSound= this.data.targetFinalSoundSelector; 
         this.confetiEfect = this.data.confetiSelector; 
     
         
@@ -716,6 +718,13 @@ AFRAME.registerComponent('tutorial-interactiu', {
         }
         if (this.confetiEfect) {
             console.log("confeti trobat");
+            if(this.finalSound)
+            {
+                console.log("so final trobat"); 
+                this.finalSound.components.sound.playSound();
+                
+
+            }
             
             // Activar el sistema de confeti personalitzat
             const confettiSystem = this.confetiEfect.components['confetti-system'];
@@ -736,6 +745,7 @@ AFRAME.registerComponent('tutorial-interactiu', {
         // Tancar automàticament després de 3 segons
         setTimeout(() => {
             this.closeManual();
+            this.finalSound.components.sound.stopSound();
         }, 5000);
     },
 

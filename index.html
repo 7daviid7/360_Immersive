@@ -20,6 +20,7 @@
       <a-assets>
         <audio id="click-sound" src="https://cdn.aframe.io/360-image-gallery-boilerplate/audio/click.ogg"></audio>
         <audio id="finish-sound" src="assets/sounds/decidemp3-14575.mp3"></audio>
+        <audio id="celebration-sound" src="assets/sounds/applause-01-253125.mp3"></audio>
         <img id="img1" src="assets/imatges/1.jpg">
         <img id="img2" src="assets/imatges/2.jpg">
         <img id="img3" src="assets/imatges/3.jpg">
@@ -36,6 +37,8 @@
 
       <a-entity id="instruccions" visible="true" position="0 1.6 -3.51658" tutorial-interactiu>
         <a-entity id="confetti-emitter" position="0 2.97512 -1.80413" confetti-system></a-entity>
+        <a-entity id="so-final" sound="src: #elebration-sound; autoplay: false; loop: false;"></a-entity>
+
         <a-plane id="panell-instruccions" scale="1.05 1.04 1" width="5" height="3.5" color="#222" opacity="0.9" position="0.02 -0.13 -0.01"></a-plane>
 
         <a-entity id="manual-initial-screen" visible="true">
